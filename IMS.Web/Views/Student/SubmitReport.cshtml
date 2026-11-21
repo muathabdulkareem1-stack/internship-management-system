@@ -1,0 +1,137 @@
+@using IMS.Web.Enums
+@{
+    ViewData["Title"] = "Submit Report";
+    var assignment   = ViewBag.Assignment as IMS.Web.Models.Assignment;
+    var categories   = ViewBag.Categories as ActivityCategory[] ?? Enum.GetValues<ActivityCategory>();
+    var existing     = assignment?.Report;
+    bool isResubmit  = existing is not null && existing.Status == ReportStatus.Rejected;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a asp-action="Reports" class="btn-ims btn-ims-outline" style="padding:7px 12px"><i class="bi bi-arrow-left"></i></a>
+            <div>
+                <h4 style="font-size:1.1rem;font-weight:700;color:var(--text);margin:0">
+                    <i class="bi bi-journal-plus me-2" style="color:var(--purple)"></i>
+                    @(isResubmit ? "Resubmit Report" : "Submit Report")
+                </h4>
+            </div>
+        </div>
+
+        <div class="ims-card mb-3">
+            <div class="ims-card-body">
+                <div style="font-weight:600;margin-bottom:6px">
+                    <i class="bi bi-clipboard me-2" style="color:var(--green)"></i>@assignment!.Title
+                </div>
+                <div style="color:var(--text-muted);font-size:.83rem;margin-bottom:10px">@assignment.Description</div>
+                <div class="d-flex align-items-center gap-3">
+                    <small style="color:var(--text-muted)"><i class="bi bi-calendar me-1"></i>Due: @assignment.DueDate.ToString("dd MMM yyyy")</small>
+                    @if (assignment.AttachmentPath is not null)
+                    {
+                        <a asp-action="DownloadTaskFile" asp-route-assignmentId="@assignment.Id"
+                           class="btn-ims btn-ims-success" style="font-size:.78rem;padding:4px 10px">
+                            <i class="bi bi-download me-1"></i>Download Task File
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (isResubmit && !string.IsNullOrWhiteSpace(existing!.RejectionReason))
+        {
+            <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:.84rem">
+                <i class="bi bi-exclamation-triangle-fill me-1" style="color:var(--red)"></i>
+                <strong style="color:var(--red)">Supervisor's rejection reason:</strong>
+                <div style="color:var(--text-muted);margin-top:4px">@existing.RejectionReason</div>
+            </div>
+        }
+        else if (isResubmit)
+        {
+            <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:.84rem;color:var(--amber)">
+                <i class="bi bi-arrow-repeat me-2"></i>Your previous report was rejected. Please correct and resubmit.
+            </div>
+        }
+
+        <div class="ims-card">
+            <div class="ims-card-body">
+                <form asp-action="SubmitReport" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="InternshipId"  value="@ViewBag.InternshipId" />
+                    <input type="hidden" name="AssignmentId"  value="@assignment.Id" />
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label">Report Date</label>
+                            <input name="ReportDate" type="date" class="form-control" required
+                                   value="@(isResubmit ? existing!.ReportDate.ToString("yyyy-MM-dd") : "")" />
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Hours Worked</label>
+                            <input name="HoursWorked" type="number" min="1" max="12" class="form-control" required
+                                   value="@(isResubmit ? existing!.HoursWorked : "")" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Activity Category</label>
+                        <select name="Category" class="form-select" required>
+                            @foreach (var cat in categories)
+                            {
+                                if (isResubmit && existing!.Category == cat)
+                                {
+                                    <option value="@cat" selected="selected">@cat</option>
+                                }
+                                else
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">What did you do?</label>
+                        <textarea name="TasksCompleted" class="form-control" rows="4" required
+                            placeholder="Describe what you worked on for this task...">@(isResubmit ? existing!.TasksCompleted : "")</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Key Learnings &amp; Challenges</label>
+                        <textarea name="KeyLearnings" class="form-control" rows="3"
+                            placeholder="What did you learn? Any challenges?">@(isResubmit ? existing!.KeyLearnings : "")</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Additional Notes</label>
+                        <textarea name="Notes" class="form-control" rows="2"
+                            placeholder="Questions or comments for your supervisor...">@(isResubmit ? existing!.Notes : "")</textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-paperclip me-1"></i>Upload Your Work
+                            <span style="color:var(--text-muted);font-weight:400"> (optional)</span>
+                        </label>
+                        @if (isResubmit && existing!.AttachmentName is not null)
+                        {
+                            <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:6px">
+                                <i class="bi bi-file-earmark me-1"></i>Current: @existing.AttachmentName — upload new to replace
+                            </div>
+                        }
+                        <input name="attachment" type="file" class="form-control" />
+                        <div class="form-text">PDF, Word, Excel, zip, etc.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn-ims btn-ims-primary">
+                            <i class="bi bi-upload me-1"></i>@(isResubmit ? "Resubmit Report" : "Submit Report")
+                        </button>
+                        <a asp-action="Reports" class="btn-ims btn-ims-outline">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>

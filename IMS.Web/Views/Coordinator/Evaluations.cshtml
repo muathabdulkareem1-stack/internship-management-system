@@ -1,0 +1,36 @@
+@model List<IMS.Web.Models.Evaluation>
+@{ ViewData["Title"] = "All Evaluations"; }
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No evaluations yet.</div>
+}
+
+@foreach (var e in Model)
+{
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white d-flex justify-content-between">
+            <span class="fw-semibold">@e.Internship?.Student?.FullName — @(new DateTime(e.Year, e.Month, 1).ToString("MMMM yyyy"))</span>
+            <span class="text-muted small">by @e.Supervisor?.FullName · @e.EvaluatedAt.ToString("MMM dd, yyyy")</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-2 mb-2">
+            @foreach (var es in e.EvaluationSkills)
+            {
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="fw-semibold">@es.Skill?.Name</small><small>@es.Rating/5</small>
+                    </div>
+                    <div class="progress" style="height:6px">
+                        <div class="progress-bar @(es.Rating >= 4 ? "bg-success" : es.Rating >= 3 ? "bg-warning" : "bg-danger")" style="width:@(es.Rating * 20)%"></div>
+                    </div>
+                </div>
+            }
+            </div>
+            @if (!string.IsNullOrEmpty(e.Comments))
+            {
+                <p class="text-muted small mb-0"><i class="bi bi-chat-left-text me-1"></i>@e.Comments</p>
+            }
+        </div>
+    </div>
+}

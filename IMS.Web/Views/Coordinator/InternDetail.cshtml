@@ -1,0 +1,263 @@
+@using IMS.Web.Enums
+@{
+    ViewData["Title"] = "Intern Detail";
+    var internship  = ViewBag.Internship  as IMS.Web.Models.Internship;
+    var assignments = ViewBag.Assignments as List<IMS.Web.Models.Assignment> ?? [];
+    var evaluations = ViewBag.Evaluations as List<IMS.Web.Models.Evaluation> ?? [];
+}
+
+<div class="mb-3">
+    <a asp-action="Internships" class="btn-ims btn-ims-outline" style="padding:7px 12px">
+        <i class="bi bi-arrow-left me-1"></i>Back to Internships
+    </a>
+</div>
+
+<div class="ims-card mb-4">
+    <div class="ims-card-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+            <div>
+                <h5 style="font-size:1.05rem;font-weight:700;margin:0 0 6px;color:var(--text)">
+                    <i class="bi bi-person-badge me-2" style="color:var(--purple)"></i>@internship?.Student?.FullName
+                </h5>
+                <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:4px">
+                    <i class="bi bi-building me-1"></i>@internship?.CompanyName
+                    <span style="margin:0 8px;opacity:.4">·</span>
+                    <i class="bi bi-briefcase me-1"></i>@internship?.Position
+                </div>
+                @if (internship?.StartDate is not null && internship?.EndDate is not null)
+                {
+                    <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:4px">
+                        <i class="bi bi-calendar-range me-1"></i>
+                        @internship.StartDate.Value.ToString("dd MMM yyyy") → @internship.EndDate.Value.ToString("dd MMM yyyy")
+                    </div>
+                }
+                <div style="font-size:.82rem;color:var(--text-muted)">
+                    <i class="bi bi-person-check me-1"></i>
+                    Supervisor: <strong style="color:var(--text)">@(internship?.Supervisor?.FullName ?? "Not assigned")</strong>
+                </div>
+            </div>
+            <span class="badge fs-6 @(internship?.Status == InternshipStatus.Approved  ? "bg-success" :
+                                       internship?.Status == InternshipStatus.Rejected  ? "bg-danger"  :
+                                       internship?.Status == InternshipStatus.Cancelled ? "bg-secondary" :
+                                       "bg-warning text-dark")">
+                @internship?.Status
+            </span>
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" id="internTabs">
+    <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#tasksTab">
+            <i class="bi bi-clipboard-check me-1"></i>Tasks &amp; Reports
+            <span class="badge bg-secondary ms-1">@assignments.Count</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#evaluationsTab">
+            <i class="bi bi-star-half me-1"></i>Monthly Evaluations
+            <span class="badge bg-secondary ms-1">@evaluations.Count</span>
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content">
+
+    <div class="tab-pane fade show active" id="tasksTab">
+        @if (!assignments.Any())
+        {
+            <div class="ims-card">
+                <div class="ims-card-body">
+                    <div class="empty-state">
+                        <i class="bi bi-inbox" style="font-size:2rem;color:var(--purple);opacity:.4"></i>
+                        <div style="margin-top:10px;color:var(--text-muted)">No tasks assigned yet.</div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3">
+            @foreach (var a in assignments)
+            {
+                var report = a.Report;
+                <div class="ims-card">
+                    <div class="ims-card-header">
+                        <div>
+                            <span style="font-weight:600"><i class="bi bi-list-task me-2" style="color:var(--purple)"></i>@a.Title</span>
+                            <span style="font-size:.78rem;color:var(--text-muted);margin-left:8px">Due: @a.DueDate.ToString("dd MMM yyyy")</span>
+                        </div>
+                        @if (report is not null)
+                        {
+                            <span class="badge @(report.Status == ReportStatus.Reviewed  ? "bg-success" :
+                                                 report.Status == ReportStatus.Rejected  ? "bg-danger"  :
+                                                 "bg-warning text-dark")">@report.Status</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">No Report</span>
+                        }
+                    </div>
+                    <div class="ims-card-body">
+                        @if (!string.IsNullOrEmpty(a.Description))
+                        {
+                            <p style="font-size:.84rem;color:var(--text-muted);margin-bottom:14px">@a.Description</p>
+                        }
+
+                        @if (report is not null)
+                        {
+                            <div style="background:var(--bg3);border:1px solid var(--card-border);border-radius:10px;padding:16px;margin-bottom:12px">
+                                <div style="font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+                                    <i class="bi bi-journal-text me-1" style="color:var(--cyan)"></i>Student Report
+                                </div>
+                                <div class="row g-2" style="font-size:.82rem">
+                                    <div class="col-md-3">
+                                        <div style="color:var(--text-muted)">Date</div>
+                                        <div style="font-weight:600">@report.ReportDate.ToString("dd MMM yyyy")</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div style="color:var(--text-muted)">Hours</div>
+                                        <div style="font-weight:600">@report.HoursWorked h</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div style="color:var(--text-muted)">Category</div>
+                                        <span class="badge bg-secondary">@report.Category</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        @if (report.AttachmentPath is not null)
+                                        {
+                                            <a asp-controller="Coordinator" asp-action="DownloadReport"
+                                               asp-route-reportId="@report.Id"
+                                               class="btn-ims btn-ims-outline" style="padding:4px 8px;font-size:.75rem">
+                                                <i class="bi bi-download me-1"></i>Download
+                                            </a>
+                                        }
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div style="color:var(--text-muted)">Tasks Completed</div>
+                                        <div>@report.TasksCompleted</div>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(report.KeyLearnings))
+                                    {
+                                        <div class="col-md-6">
+                                            <div style="color:var(--text-muted)">Key Learnings</div>
+                                            <div>@report.KeyLearnings</div>
+                                        </div>
+                                    }
+                                    @if (report.Status == ReportStatus.Rejected && !string.IsNullOrEmpty(report.RejectionReason))
+                                    {
+                                        <div class="col-12">
+                                            <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:6px;padding:6px 10px;font-size:.8rem;color:var(--red)">
+                                                <i class="bi bi-x-circle me-1"></i><strong>Rejection:</strong> @report.RejectionReason
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (a.Rating.HasValue)
+                            {
+                                <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:14px 16px">
+                                    <div style="font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px">
+                                        <i class="bi bi-star-fill me-1" style="color:var(--amber)"></i>Supervisor Evaluation
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+                                        <div>
+                                            <div style="color:var(--text-muted);font-size:.75rem;margin-bottom:4px">Rating</div>
+                                            <div style="display:flex;gap:2px">
+                                                @for (int s = 1; s <= 5; s++)
+                                                {
+                                                    <i class="bi @(s <= a.Rating ? "bi-star-fill" : "bi-star")" style="color:@(s <= a.Rating ? "var(--amber)" : "var(--text-dim)")"></i>
+                                                }
+                                                <span style="margin-left:6px;font-size:.8rem;color:var(--text-muted)">(@a.Rating/5)</span>
+                                            </div>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(a.Feedback))
+                                        {
+                                            <div style="flex:1">
+                                                <div style="color:var(--text-muted);font-size:.75rem;margin-bottom:4px">Feedback</div>
+                                                <div style="font-size:.83rem">@a.Feedback</div>
+                                            </div>
+                                        }
+                                        <div>
+                                            <div style="color:var(--text-muted);font-size:.75rem;margin-bottom:4px">Evaluated</div>
+                                            <div style="font-size:.82rem">@a.EvaluatedAt?.ToString("dd MMM yyyy")</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="font-size:.82rem;color:var(--text-muted);font-style:italic">
+                                    <i class="bi bi-hourglass-split me-1"></i>Supervisor has not evaluated this task yet.
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div style="font-size:.83rem;color:var(--text-muted);font-style:italic">
+                                <i class="bi bi-hourglass-split me-1"></i>Student has not submitted a report yet.
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            </div>
+        }
+    </div>
+
+    <div class="tab-pane fade" id="evaluationsTab">
+        @if (!evaluations.Any())
+        {
+            <div class="ims-card">
+                <div class="ims-card-body">
+                    <div class="empty-state">
+                        <i class="bi bi-star" style="font-size:2rem;color:var(--amber);opacity:.4"></i>
+                        <div style="margin-top:10px;color:var(--text-muted)">No monthly evaluations yet.</div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var e in evaluations)
+            {
+                <div class="ims-card mb-3">
+                    <div class="ims-card-header">
+                        <span>
+                            <i class="bi bi-calendar-month me-2" style="color:var(--amber)"></i>
+                            @(new DateTime(e.Year, e.Month, 1).ToString("MMMM yyyy"))
+                        </span>
+                        <span style="font-size:.78rem;color:var(--text-muted)">
+                            by @e.Supervisor?.FullName · @e.EvaluatedAt.ToString("dd MMM yyyy")
+                        </span>
+                    </div>
+                    <div class="ims-card-body">
+                        <div class="row g-2 mb-2">
+                        @foreach (var es in e.EvaluationSkills)
+                        {
+                            var barColor = es.Rating >= 4 ? "var(--green)" : es.Rating >= 3 ? "var(--amber)" : "var(--red)";
+                            <div class="col-md-4">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                                    <span style="font-size:.82rem;font-weight:600">@es.Skill?.Name</span>
+                                    <span style="font-size:.78rem;color:var(--text-muted)">@es.Rating/5</span>
+                                </div>
+                                <div class="progress" style="height:5px;border-radius:3px">
+                                    <div class="progress-bar" style="width:@(es.Rating * 20)%;background:@barColor"></div>
+                                </div>
+                            </div>
+                        }
+                        </div>
+                        @if (!string.IsNullOrEmpty(e.Comments))
+                        {
+                            <p style="font-size:.83rem;color:var(--text-muted);font-style:italic;margin:10px 0 0">
+                                <i class="bi bi-chat-left-text me-1" style="color:var(--purple)"></i>@e.Comments
+                            </p>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+</div>

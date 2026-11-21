@@ -1,0 +1,251 @@
+@{ ViewData["Title"] = "Coordinator Dashboard"; }
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">
+                <i class="bi bi-briefcase"></i>
+            </div>
+            <div>
+                <div class="stat-label">Total Internships</div>
+                <div class="stat-value">@ViewBag.TotalInternships</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b)">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div>
+                <div class="stat-label">Pending Approval</div>
+                <div class="stat-value">@ViewBag.Pending</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#059669,#10b981)">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div>
+                <div class="stat-label">Approved</div>
+                <div class="stat-value">@ViewBag.Approved</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">
+                <i class="bi bi-people"></i>
+            </div>
+            <div>
+                <div class="stat-label">Students / Supervisors</div>
+                <div class="stat-value">@ViewBag.TotalStudents <span style="font-size:.8rem;font-weight:400;color:var(--text-muted)">/ @ViewBag.TotalSupervisors</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card" style="flex-direction:column;align-items:flex-start;gap:14px">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">
+                    <i class="bi bi-megaphone"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Open Opportunities</div>
+                    <div class="stat-value">@ViewBag.OpenOpportunities</div>
+                </div>
+            </div>
+            <a asp-action="Opportunities" class="btn-ims btn-ims-outline w-100" style="justify-content:center">
+                <i class="bi bi-megaphone me-1"></i>Manage Opportunities
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="ims-card mb-4" id="aiCard">
+    <div class="ims-card-header">
+        <span><i class="bi bi-stars me-2" style="color:var(--purple)"></i>AI Cohort Insights</span>
+        <button class="btn-ims btn-ims-primary" onclick="loadCoordAI()" id="aiBtn">
+            <i class="bi bi-stars me-1"></i>Analyze All Interns
+        </button>
+    </div>
+    <div class="ims-card-body" id="aiBody">
+        <div style="text-align:center;padding:32px;color:var(--text-muted)">
+            <i class="bi bi-stars" style="font-size:2.5rem;color:var(--purple);opacity:.4;display:block;margin-bottom:12px"></i>
+            <div style="font-size:.85rem">Click "Analyze All Interns" for an AI-powered risk and performance report.</div>
+        </div>
+    </div>
+</div>
+
+<div class="ims-card">
+    <div class="ims-card-header">
+        <span><i class="bi bi-clock-history me-2" style="color:var(--cyan)"></i>Recent Applications</span>
+        <a asp-action="Internships" class="btn-ims btn-ims-outline"><i class="bi bi-arrow-right me-1"></i>View All</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr><th>Student</th><th>Company</th><th>Position</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+            @foreach (var i in (ViewBag.Recent as List<IMS.Web.Models.Internship> ?? []))
+            {
+                <tr>
+                    <td style="font-weight:500">@i.Student?.FullName</td>
+                    <td style="color:var(--text-muted)">@i.CompanyName</td>
+                    <td style="color:var(--text-muted)">@i.Position</td>
+                    <td>
+                        <span class="badge @(i.Status == IMS.Web.Enums.InternshipStatus.Approved ? "bg-success" : i.Status == IMS.Web.Enums.InternshipStatus.Rejected ? "bg-danger" : "bg-warning text-dark")">
+                            @i.Status
+                        </span>
+                    </td>
+                    <td>
+                        @if (i.Status == IMS.Web.Enums.InternshipStatus.Pending)
+                        {
+                            <a asp-action="Internships" asp-route-status="Pending" class="btn-ims btn-ims-warning" style="font-size:.78rem;padding:5px 10px">
+                                <i class="bi bi-hourglass-split me-1"></i>Review
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-action="Internships" asp-route-status="@i.Status" class="btn-ims btn-ims-outline" style="font-size:.78rem;padding:5px 10px">
+                                <i class="bi bi-eye me-1"></i>View
+                            </a>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = 'rgba(139,92,246,.1)';
+let riskDoughnut = null, hoursBarChart = null, skillBarChart = null;
+
+async function loadCoordAI() {
+    const btn  = document.getElementById('aiBtn');
+    const body = document.getElementById('aiBody');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Analyzing...';
+    body.innerHTML = '<div style="text-align:center;padding:40px"><div class="spinner-border" style="color:var(--purple)"></div><div style="margin-top:12px;color:var(--text-muted);font-size:.85rem">AI is analyzing all interns...</div></div>';
+
+    try {
+        const res  = await fetch('/Coordinator/GetAIInsight');
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        const data = await res.json();
+        if (data.error) {
+            body.innerHTML = `<div class="alert alert-warning">${data.error}</div>`;
+            btn.disabled = false; btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Retry'; return;
+        }
+
+        const atRiskBadges  = (data.atRisk  || []).map(n => `<span class="badge bg-danger me-1">${n}</span>`).join('') || '<span style="color:var(--text-muted);font-size:.83rem">None</span>';
+        const onTrackBadges = (data.onTrack || []).map(n => `<span class="badge bg-success me-1">${n}</span>`).join('') || '<span style="color:var(--text-muted);font-size:.83rem">None</span>';
+        const ic = data.internCharts || [];
+
+        body.innerHTML = `
+          <div class="row g-3 mb-3">
+            <div class="col-md-7">
+              <div style="background:var(--bg3);border:1px solid var(--card-border);border-radius:var(--radius);padding:20px;height:100%">
+                <div style="font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px"><i class="bi bi-chat-text me-1"></i>Cohort Summary</div>
+                <p style="margin-bottom:16px">${data.overallSummary}</p>
+                <div style="margin-bottom:10px">
+                  <span style="font-size:.78rem;font-weight:600;color:var(--text-muted)"><i class="bi bi-exclamation-triangle me-1" style="color:var(--red)"></i>At Risk:</span>
+                  <div style="margin-top:6px">${atRiskBadges}</div>
+                </div>
+                <div style="margin-bottom:12px">
+                  <span style="font-size:.78rem;font-weight:600;color:var(--text-muted)"><i class="bi bi-check-circle me-1" style="color:var(--green)"></i>On Track:</span>
+                  <div style="margin-top:6px">${onTrackBadges}</div>
+                </div>
+                ${data.topPerformer ? `<div style="margin-bottom:12px;font-size:.85rem"><i class="bi bi-trophy-fill me-1" style="color:var(--amber)"></i><strong>Top Performer:</strong> ${data.topPerformer}</div>` : ''}
+                <div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:8px 12px;font-size:.82rem;color:var(--purple)">
+                  <i class="bi bi-lightbulb me-1"></i>${data.coordinatorRecommendation}
+                </div>
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div style="background:var(--bg3);border:1px solid var(--card-border);border-radius:var(--radius);padding:20px;height:100%">
+                <div style="font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:16px"><i class="bi bi-bar-chart me-1"></i>Cohort Averages</div>
+                <div style="margin-bottom:14px">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:.78rem;color:var(--text-muted)">Avg Hours Progress</span><span style="font-size:.78rem">${(data.averageHoursPercent||0).toFixed(0)}%</span></div>
+                  <div class="progress" style="height:6px"><div class="progress-bar" style="width:${data.averageHoursPercent||0}%;background:var(--cyan)"></div></div>
+                </div>
+                <div style="margin-bottom:14px">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:.78rem;color:var(--text-muted)">Avg Skill Rating</span><span style="font-size:.78rem">${(data.averageSkillRating||0).toFixed(1)}/5</span></div>
+                  <div class="progress" style="height:6px"><div class="progress-bar" style="width:${(data.averageSkillRating||0)*20}%;background:var(--amber)"></div></div>
+                </div>
+                <div style="text-align:center;margin-top:10px">
+                  <canvas id="riskChart" height="150"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          ${ic.length > 0 ? `
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div style="background:var(--bg3);border:1px solid var(--card-border);border-radius:var(--radius);padding:18px">
+                <div style="font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px"><i class="bi bi-clock-history me-1"></i>Hours Progress per Intern (%)</div>
+                <canvas id="hoursBarChart" height="180"></canvas>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div style="background:var(--bg3);border:1px solid var(--card-border);border-radius:var(--radius);padding:18px">
+                <div style="font-size:.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px"><i class="bi bi-star me-1"></i>Avg Skill Rating per Intern</div>
+                <canvas id="skillBarChart" height="180"></canvas>
+              </div>
+            </div>
+          </div>` : ''}`;
+
+        if (riskDoughnut)  riskDoughnut.destroy();
+        if (hoursBarChart) hoursBarChart.destroy();
+        if (skillBarChart) skillBarChart.destroy();
+
+        riskDoughnut = new Chart(document.getElementById('riskChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['At Risk', 'On Track'],
+                datasets: [{ data:[data.atRisk?.length||0, data.onTrack?.length||0],
+                    backgroundColor:['#ef4444','#10b981'], borderColor:'#111827', borderWidth:3 }]
+            },
+            options: { plugins:{ legend:{ position:'bottom', labels:{font:{size:10},color:'#94a3b8'} } }, cutout:'65%' }
+        });
+
+        if (ic.length > 0) {
+            const names  = ic.map(i => i.name);
+            const hours  = ic.map(i => i.hours);
+            const skills = ic.map(i => i.avgSkill);
+
+            hoursBarChart = new Chart(document.getElementById('hoursBarChart'), {
+                type:'bar', data:{ labels:names, datasets:[{ label:'Hours %', data:hours,
+                    backgroundColor:hours.map(h=>h>=75?'#10b981':h>=40?'#f59e0b':'#ef4444'), borderRadius:4 }] },
+                options:{ indexAxis:'y', scales:{
+                    x:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:9}},grid:{color:'rgba(139,92,246,.1)'}},
+                    y:{ticks:{font:{size:9}},grid:{color:'rgba(139,92,246,.05)'}} },
+                    plugins:{legend:{display:false}} }
+            });
+
+            skillBarChart = new Chart(document.getElementById('skillBarChart'), {
+                type:'bar', data:{ labels:names, datasets:[{ label:'Avg Skill', data:skills,
+                    backgroundColor:skills.map(s=>s>=4?'#10b981':s>=3?'#f59e0b':'#ef4444'), borderRadius:4 }] },
+                options:{ indexAxis:'y', scales:{
+                    x:{min:0,max:5,ticks:{stepSize:1,font:{size:9}},grid:{color:'rgba(139,92,246,.1)'}},
+                    y:{ticks:{font:{size:9}},grid:{color:'rgba(139,92,246,.05)'}} },
+                    plugins:{legend:{display:false}} }
+            });
+        }
+
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Refresh';
+    } catch(e) {
+        document.getElementById('aiBody').innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${e.message}</div>`;
+    } finally {
+        btn.disabled = false;
+    }
+}
+</script>

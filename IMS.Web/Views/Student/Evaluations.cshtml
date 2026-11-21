@@ -1,0 +1,65 @@
+@model List<IMS.Web.Models.Evaluation>
+@{ ViewData["Title"] = "My Evaluations"; }
+
+<div class="mb-4">
+    <h4 style="font-size:1.15rem;font-weight:700;color:var(--text);margin:0 0 4px">Monthly Evaluations</h4>
+    <p style="color:var(--text-muted);font-size:.83rem;margin:0">Skills assessed by your supervisor each month</p>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="ims-card">
+        <div class="ims-card-body">
+            <div class="empty-state">
+                <i class="bi bi-star-half" style="font-size:2.5rem;color:var(--amber);opacity:.5"></i>
+                <div style="margin-top:12px;font-weight:600;color:var(--text)">No evaluations yet</div>
+                <div style="color:var(--text-muted);font-size:.85rem">Your supervisor hasn't submitted any evaluations yet.</div>
+            </div>
+        </div>
+    </div>
+}
+
+@foreach (var e in Model)
+{
+    var monthName = new DateTime(e.Year, e.Month, 1).ToString("MMMM yyyy");
+    var avg = e.EvaluationSkills.Any() ? e.EvaluationSkills.Average(es => es.Rating) : 0;
+    var avgColor = avg >= 4 ? "var(--green)" : avg >= 3 ? "var(--amber)" : "var(--red)";
+
+    <div class="ims-card mb-3">
+        <div class="ims-card-header">
+            <span>
+                <i class="bi bi-calendar-check me-2" style="color:var(--amber)"></i>@monthName
+                <span style="font-size:.78rem;color:var(--text-muted);margin-left:8px">by @e.Supervisor?.FullName</span>
+            </span>
+            <span style="font-size:.85rem;font-weight:700;color:@avgColor">
+                Avg: @avg.ToString("0.0") / 5
+            </span>
+        </div>
+        <div class="ims-card-body">
+            @if (e.EvaluationSkills.Any())
+            {
+                <div class="row g-3 mb-3">
+                @foreach (var es in e.EvaluationSkills)
+                {
+                    var barColor = es.Rating >= 4 ? "var(--green)" : es.Rating >= 3 ? "var(--amber)" : "var(--red)";
+                    <div class="col-md-4">
+                        <div style="margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+                            <span style="font-size:.82rem;font-weight:600">@es.Skill?.Name</span>
+                            <span style="font-size:.78rem;color:var(--text-muted)">@es.Rating / 5</span>
+                        </div>
+                        <div class="progress" style="height:5px;border-radius:3px">
+                            <div class="progress-bar" style="width:@(es.Rating * 20)%;background:@barColor"></div>
+                        </div>
+                    </div>
+                }
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(e.Comments))
+            {
+                <div style="background:var(--bg3);border:1px solid var(--card-border);border-radius:8px;padding:10px 14px;font-size:.84rem;color:var(--text-muted);font-style:italic">
+                    <i class="bi bi-chat-left-text me-1" style="color:var(--purple)"></i>"@e.Comments"
+                </div>
+            }
+        </div>
+    </div>
+}

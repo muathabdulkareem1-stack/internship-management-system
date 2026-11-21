@@ -1,0 +1,58 @@
+@model IMS.Web.Models.User
+@{ ViewData["Title"] = "Edit User"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a asp-action="Users" class="btn-ims btn-ims-outline" style="padding:7px 12px">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <h4 style="font-size:1.1rem;font-weight:700;color:var(--text);margin:0">
+                <i class="bi bi-person-gear me-2" style="color:var(--red)"></i>Edit User
+            </h4>
+        </div>
+
+        <div class="ims-card">
+            <div class="ims-card-body">
+                <form asp-action="EditUser" asp-route-id="@Model.Id" method="post">
+
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input name="fullName" class="form-control" value="@Model.FullName" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <input name="email" type="email" class="form-control" value="@Model.Email" required />
+                    </div>
+
+                    <hr style="border-color:var(--card-border);margin:20px 0" />
+                    <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:14px">
+                        <i class="bi bi-shield-lock me-1" style="color:var(--purple)"></i>Leave blank to keep the current password.
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">New Password</label>
+                        <input name="newPassword" type="password" class="form-control"
+                               placeholder="At least 6 characters" minlength="6" />
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn-ims btn-ims-danger">
+                            <i class="bi bi-floppy me-1"></i>Save Changes
+                        </button>
+                        <a asp-action="Users" class="btn-ims btn-ims-outline">Cancel</a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <div style="font-size:.8rem;color:var(--text-muted);margin-top:12px">
+            <i class="bi bi-info-circle me-1"></i>
+            Role: <strong style="color:var(--text)">@Model.Role</strong> — use the Users table to change role.
+        </div>
+
+    </div>
+</div>

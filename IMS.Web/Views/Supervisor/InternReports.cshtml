@@ -1,0 +1,194 @@
+@model List<IMS.Web.Models.Assignment>
+@using IMS.Web.Enums
+@{
+    ViewData["Title"] = "Tasks & Reports";
+    var internship = ViewBag.Internship as IMS.Web.Models.Internship;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Interns" class="btn-ims btn-ims-outline" style="padding:7px 12px"><i class="bi bi-arrow-left"></i></a>
+        <div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text)">@internship?.Student?.FullName</div>
+            <div style="font-size:.82rem;color:var(--text-muted)">@internship?.CompanyName — @internship?.Position</div>
+        </div>
+    </div>
+    <a asp-action="AssignTask" asp-route-internshipId="@internship!.Id" class="btn-ims btn-ims-success">
+        <i class="bi bi-clipboard-plus me-1"></i>Assign New Task
+    </a>
+</div>
+
+<div style="color:var(--text-muted);font-size:.82rem;margin-bottom:16px">
+    @Model.Count task(s) —
+    @Model.Count(a => a.Report?.Status == ReportStatus.Reviewed) reviewed,
+    @Model.Count(a => a.Report?.Status == ReportStatus.Submitted) pending review,
+    @Model.Count(a => a.Report?.Status == ReportStatus.Rejected) rejected,
+    @Model.Count(a => a.Report is null) not submitted
+</div>
+
+@if (!Model.Any())
+{
+    <div class="ims-card">
+        <div class="ims-card-body">
+            <div class="empty-state">
+                <i class="bi bi-clipboard" style="font-size:2.5rem;color:var(--purple);opacity:.4"></i>
+                <div style="margin-top:12px;font-weight:600;color:var(--text)">No tasks assigned yet</div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="d-flex flex-column gap-3">
+@foreach (var a in Model)
+{
+    <div class="ims-card">
+        <div class="ims-card-header">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <span style="font-weight:600">@a.Title</span>
+                <span style="font-size:.78rem;color:var(--text-muted)">Due: @a.DueDate.ToString("dd MMM yyyy")</span>
+                @if (a.DueDate < DateOnly.FromDateTime(DateTime.Today) && a.Report is null)
+                {
+                    <span class="badge bg-danger">Overdue</span>
+                }
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                @if (a.Report is null)
+                {
+                    <span class="badge bg-secondary">Not Submitted</span>
+                }
+                else if (a.Report.Status == ReportStatus.Submitted)
+                {
+                    <span class="badge bg-warning text-dark">Submitted</span>
+                }
+                else if (a.Report.Status == ReportStatus.Rejected)
+                {
+                    <span class="badge bg-danger">Rejected</span>
+                }
+                else
+                {
+                    <span class="badge bg-success">Reviewed</span>
+                }
+                <a asp-action="EditTask" asp-route-assignmentId="@a.Id"
+                   class="btn-ims btn-ims-outline" style="padding:5px 9px;font-size:.78rem" title="Edit task">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <form asp-action="DeleteTask" method="post"
+                      onsubmit="return confirm('Delete task \'@a.Title\'? This will also remove the student\'s report.')">
+                    <input type="hidden" name="assignmentId" value="@a.Id" />
+                    <button class="btn-ims btn-ims-danger" style="padding:5px 9px;font-size:.78rem" title="Delete task">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="ims-card-body">
+            <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:12px">@a.Description</p>
+
+            @if (a.AttachmentPath is not null)
+            {
+                <div style="margin-bottom:12px;font-size:.82rem;color:var(--text-muted)">
+                    <i class="bi bi-paperclip me-1" style="color:var(--green)"></i>Task file: <span>@a.AttachmentName</span>
+                </div>
+            }
+
+            @if (a.Report is not null)
+            {
+                <div style="background:var(--bg3);border:1px solid var(--card-border);border-radius:10px;padding:16px;margin-bottom:14px">
+                    <div style="font-size:.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+                        <i class="bi bi-journal-text me-1" style="color:var(--cyan)"></i>Student's Report
+                        @if (a.Report.Category != default)
+                        {
+                            <span class="badge bg-primary bg-opacity-75 ms-2" style="text-transform:none">@a.Report.Category</span>
+                        }
+                    </div>
+                    <div class="row g-2 mb-2" style="font-size:.82rem">
+                        <div class="col-auto" style="color:var(--text-muted)">Date: <span style="color:var(--text)">@a.Report.ReportDate</span></div>
+                        <div class="col-auto" style="color:var(--text-muted)">Hours: <span style="color:var(--text)">@a.Report.HoursWorked h</span></div>
+                    </div>
+                    <div style="font-size:.83rem;margin-bottom:8px">
+                        <span style="color:var(--text-muted);display:block;margin-bottom:2px">What was done:</span>
+                        @a.Report.TasksCompleted
+                    </div>
+                    @if (!string.IsNullOrEmpty(a.Report.KeyLearnings))
+                    {
+                        <div style="font-size:.83rem;margin-bottom:8px">
+                            <span style="color:var(--text-muted);display:block;margin-bottom:2px">Key Learnings:</span>
+                            @a.Report.KeyLearnings
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(a.Report.Notes))
+                    {
+                        <div style="font-size:.83rem;margin-bottom:8px">
+                            <span style="color:var(--text-muted);display:block;margin-bottom:2px">Notes:</span>
+                            @a.Report.Notes
+                        </div>
+                    }
+                    @if (a.Report.AttachmentPath is not null)
+                    {
+                        <a asp-action="DownloadReport" asp-route-reportId="@a.Report.Id"
+                           class="btn-ims btn-ims-outline" style="font-size:.78rem;padding:5px 10px;margin-top:6px">
+                            <i class="bi bi-download me-1"></i>Download @a.Report.AttachmentName
+                        </a>
+                    }
+                    @if (a.Report.Status == ReportStatus.Rejected && !string.IsNullOrWhiteSpace(a.Report.RejectionReason))
+                    {
+                        <div style="margin-top:10px;font-size:.8rem;color:var(--red)">
+                            <i class="bi bi-x-circle me-1"></i>Rejection reason: @a.Report.RejectionReason
+                        </div>
+                    }
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap align-items-start">
+                    @if (a.Report.Status == ReportStatus.Submitted)
+                    {
+                        <form asp-action="ReviewReport" method="post">
+                            <input type="hidden" name="reportId" value="@a.Report.Id" />
+                            <button class="btn-ims btn-ims-success"><i class="bi bi-check2 me-1"></i>Approve</button>
+                        </form>
+                        <button class="btn-ims btn-ims-danger" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#reject-@a.Report.Id">
+                            <i class="bi bi-x me-1"></i>Reject
+                        </button>
+                        <div class="collapse w-100 mt-2" id="reject-@a.Report.Id">
+                            <form asp-action="RejectReport" method="post" class="d-flex gap-2">
+                                <input type="hidden" name="reportId" value="@a.Report.Id" />
+                                <input name="rejectionReason" type="text" class="form-control form-control-sm"
+                                       placeholder="Reason for rejection (optional)" />
+                                <button class="btn-ims btn-ims-danger" style="white-space:nowrap">
+                                    <i class="bi bi-x-circle me-1"></i>Confirm Reject
+                                </button>
+                            </form>
+                        </div>
+                    }
+                    @if (a.Report.Status != ReportStatus.Rejected)
+                    {
+                        <a asp-action="EvaluateTask" asp-route-assignmentId="@a.Id"
+                           class="btn-ims btn-ims-warning">
+                            <i class="bi bi-star me-1"></i>@(a.Rating.HasValue ? "Edit Evaluation" : "Evaluate Task")
+                        </a>
+                    }
+                </div>
+
+                @if (a.Rating.HasValue)
+                {
+                    <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:14px 16px;margin-top:14px">
+                        <div style="font-size:.78rem;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+                            <i class="bi bi-star-fill" style="color:var(--amber)"></i>
+                            <span>Your Evaluation</span>
+                            <span style="background:rgba(245,158,11,.2);color:var(--amber);padding:2px 10px;border-radius:12px;font-size:.8rem">@a.Rating / 5</span>
+                        </div>
+                        <div style="font-size:.83rem;color:var(--text-muted)">@a.Feedback</div>
+                        <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">Evaluated: @a.EvaluatedAt?.ToString("dd MMM yyyy")</div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div style="font-size:.83rem;color:var(--text-muted)">
+                    <i class="bi bi-hourglass me-1"></i>Waiting for student to submit report.
+                </div>
+            }
+        </div>
+    </div>
+}
+</div>

@@ -1,0 +1,86 @@
+@model IMS.Web.Models.Assignment
+@{ ViewData["Title"] = "Evaluate Task"; }
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a asp-action="InternReports" asp-route-internshipId="@Model.InternshipId"
+               class="btn-ims btn-ims-outline" style="padding:7px 12px">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h4 style="font-size:1.1rem;font-weight:700;color:var(--text);margin:0">
+                    <i class="bi bi-star me-2" style="color:var(--amber)"></i>Evaluate Task
+                </h4>
+                <div style="font-size:.82rem;color:var(--text-muted)">@Model.Internship?.Student?.FullName — @Model.Title</div>
+            </div>
+        </div>
+
+        <div class="ims-card mb-4">
+            <div class="ims-card-body">
+                <div style="font-weight:600;margin-bottom:6px">@Model.Title</div>
+                <div style="font-size:.83rem;color:var(--text-muted);margin-bottom:12px">@Model.Description</div>
+                @if (Model.Report is not null)
+                {
+                    <div style="border-top:1px solid var(--card-border);padding-top:12px">
+                        <div style="font-size:.78rem;font-weight:600;margin-bottom:6px">
+                            <i class="bi bi-journal-text me-1" style="color:var(--cyan)"></i>Student's Report
+                        </div>
+                        <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:4px">Hours worked: @Model.Report.HoursWorked h</div>
+                        <div style="font-size:.83rem">@Model.Report.TasksCompleted</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="ims-card">
+            <div class="ims-card-body">
+                <form asp-action="EvaluateTask" asp-route-assignmentId="@Model.Id" method="post">
+
+                    <div class="mb-4">
+                        <label class="form-label">Rating</label>
+                        <div class="d-flex flex-column gap-2">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                var current = i;
+                                var label = current switch {
+                                    1 => "Poor",
+                                    2 => "Fair",
+                                    3 => "Good",
+                                    4 => "Very Good",
+                                    _ => "Excellent"
+                                };
+                                <div class="form-check" style="background:var(--bg3);border:1px solid var(--card-border);border-radius:8px;padding:10px 14px;margin:0">
+                                    <input class="form-check-input" type="radio" name="rating"
+                                           id="star@(current)" value="@current"
+                                           @(Model.Rating == current ? "checked" : "") required />
+                                    <label class="form-check-label" for="star@(current)" style="font-size:.88rem">
+                                        <span style="margin-right:6px">@("⭐".PadRight(current, '⭐'))</span>
+                                        @current — @label
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Feedback</label>
+                        <textarea name="feedback" class="form-control" rows="4" required
+                            placeholder="Write your feedback on how the student performed...">@Model.Feedback</textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn-ims btn-ims-warning">
+                            <i class="bi bi-star-fill me-1"></i>Submit Evaluation
+                        </button>
+                        <a asp-action="InternReports" asp-route-internshipId="@Model.InternshipId"
+                           class="btn-ims btn-ims-outline">Cancel</a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>

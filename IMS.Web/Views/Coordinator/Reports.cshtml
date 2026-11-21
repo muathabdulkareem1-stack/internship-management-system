@@ -1,0 +1,63 @@
+@model List<IMS.Web.Models.ActivityReport>
+@using IMS.Web.Enums
+@{ ViewData["Title"] = "All Reports"; }
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Student</th>
+                    <th>Date</th>
+                    <th>Hours</th>
+                    <th>Category</th>
+                    <th>Tasks Summary</th>
+                    <th>Status</th>
+                    <th>File</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Any())
+            {
+                <tr><td colspan="7" class="text-center text-muted py-4">No reports found.</td></tr>
+            }
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td>@r.Internship?.Student?.FullName</td>
+                    <td class="text-muted small">@r.ReportDate</td>
+                    <td class="text-muted small">@r.HoursWorked h</td>
+                    <td><span class="badge bg-secondary">@r.Category</span></td>
+                    <td class="small">@(r.TasksCompleted.Length > 60 ? r.TasksCompleted[..60] + "…" : r.TasksCompleted)</td>
+                    <td>
+                        <span class="badge @(r.Status == ReportStatus.Reviewed ? "bg-success" :
+                                             r.Status == ReportStatus.Rejected ? "bg-danger" : "bg-warning text-dark")">
+                            @r.Status
+                        </span>
+                    </td>
+                    <td>
+                        @if (r.AttachmentPath is not null)
+                        {
+                            <a asp-action="DownloadReport" asp-route-reportId="@r.Id"
+                               class="btn btn-sm btn-outline-primary" title="Download @r.AttachmentName">
+                                <i class="bi bi-download me-1"></i>Download
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted small">—</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer bg-white text-muted small">
+        @Model.Count report(s) —
+        @Model.Count(r => r.Status == ReportStatus.Reviewed) reviewed,
+        @Model.Count(r => r.Status == ReportStatus.Submitted) pending,
+        @Model.Count(r => r.Status == ReportStatus.Rejected) rejected,
+        @Model.Count(r => r.AttachmentPath is not null) with file
+    </div>
+</div>

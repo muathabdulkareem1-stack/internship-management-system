@@ -1,0 +1,60 @@
+@{
+    ViewData["Title"] = "Assign Task";
+    var internship = ViewBag.Internship as IMS.Web.Models.Internship;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a asp-action="InternReports" asp-route-internshipId="@internship!.Id" class="btn-ims btn-ims-outline" style="padding:7px 12px">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h4 style="font-size:1.1rem;font-weight:700;color:var(--text);margin:0">
+                    <i class="bi bi-clipboard-plus me-2" style="color:var(--green)"></i>Assign Task
+                </h4>
+                <div style="font-size:.82rem;color:var(--text-muted)">To: @internship.Student?.FullName — @internship.CompanyName</div>
+            </div>
+        </div>
+
+        <div class="ims-card">
+            <div class="ims-card-body">
+                <form asp-action="AssignTask" asp-route-internshipId="@internship.Id"
+                      method="post" enctype="multipart/form-data">
+
+                    <div class="mb-3">
+                        <label class="form-label">Task Title</label>
+                        <input name="Title" class="form-control" placeholder="e.g. Build login page" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="Description" class="form-control" rows="4"
+                            placeholder="Describe what the student needs to do..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Due Date</label>
+                        <input name="DueDate" type="date" class="form-control" required />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-paperclip me-1"></i>Attach File
+                            <span style="color:var(--text-muted);font-weight:400"> (optional)</span>
+                        </label>
+                        <input name="attachment" type="file" class="form-control" />
+                        <div class="form-text">PDF, Word, Excel, images — any format accepted.</div>
+                    </div>
+
+                    <button type="submit" class="btn-ims btn-ims-success w-100" style="justify-content:center;padding:11px">
+                        <i class="bi bi-send me-1"></i>Assign Task
+                    </button>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>

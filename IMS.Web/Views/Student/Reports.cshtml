@@ -1,0 +1,278 @@
+@model List<IMS.Web.Models.Assignment>
+@using IMS.Web.Enums
+@{
+    ViewData["Title"] = "My Tasks";
+    var todo     = Model.Count(a => a.Report is null || a.Report.Status == ReportStatus.Rejected);
+    var inReview = Model.Count(a => a.Report?.Status == ReportStatus.Submitted);
+    var done     = Model.Count(a => a.Report?.Status == ReportStatus.Reviewed);
+    var overdue  = Model.Count(a => a.DueDate < DateOnly.FromDateTime(DateTime.Today) && a.Report is null);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 style="font-size:1.15rem;font-weight:700;color:var(--text);margin:0 0 4px">My Assigned Tasks</h4>
+        <p style="color:var(--text-muted);font-size:.83rem;margin:0">@Model.Count task(s) total</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="padding:14px 16px">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#374151,#1f2937);width:38px;height:38px;font-size:16px">
+                <i class="bi bi-list-task"></i>
+            </div>
+            <div>
+                <div class="stat-label">Total</div>
+                <div class="stat-value" style="font-size:1.4rem">@Model.Count</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="padding:14px 16px">
+            <div class="stat-icon" style="background:linear-gradient(135deg,rgba(245,158,11,.3),rgba(217,119,6,.3));width:38px;height:38px;font-size:16px">
+                <i class="bi bi-hourglass-split" style="color:var(--amber)"></i>
+            </div>
+            <div>
+                <div class="stat-label">To Do</div>
+                <div class="stat-value" style="font-size:1.4rem;color:var(--amber)">@todo</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="padding:14px 16px">
+            <div class="stat-icon" style="background:linear-gradient(135deg,rgba(6,182,212,.3),rgba(14,165,233,.3));width:38px;height:38px;font-size:16px">
+                <i class="bi bi-send" style="color:var(--cyan)"></i>
+            </div>
+            <div>
+                <div class="stat-label">In Review</div>
+                <div class="stat-value" style="font-size:1.4rem;color:var(--cyan)">@inReview</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="padding:14px 16px">
+            <div class="stat-icon" style="background:linear-gradient(135deg,rgba(16,185,129,.3),rgba(5,150,105,.3));width:38px;height:38px;font-size:16px">
+                <i class="bi bi-check2-circle" style="color:var(--green)"></i>
+            </div>
+            <div>
+                <div class="stat-label">Done</div>
+                <div class="stat-value" style="font-size:1.4rem;color:var(--green)">@done</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mb-4 flex-wrap align-items-center">
+    <button onclick="filterTasks('all')"    id="tab-all"    class="task-tab btn-ims btn-ims-primary"   style="font-size:.84rem;padding:7px 16px">
+        <i class="bi bi-grid me-1"></i>All <span class="tab-count">(@Model.Count)</span>
+    </button>
+    <button onclick="filterTasks('todo')"   id="tab-todo"   class="task-tab btn-ims btn-ims-outline"  style="font-size:.84rem;padding:7px 16px">
+        <i class="bi bi-hourglass-split me-1"></i>To Do <span class="tab-count">(@todo)</span>
+    </button>
+    <button onclick="filterTasks('review')" id="tab-review" class="task-tab btn-ims btn-ims-outline"  style="font-size:.84rem;padding:7px 16px">
+        <i class="bi bi-send me-1"></i>In Review <span class="tab-count">(@inReview)</span>
+    </button>
+    <button onclick="filterTasks('done')"   id="tab-done"   class="task-tab btn-ims btn-ims-outline"  style="font-size:.84rem;padding:7px 16px">
+        <i class="bi bi-check2-circle me-1"></i>Done <span class="tab-count">(@done)</span>
+    </button>
+    @if (overdue > 0)
+    {
+        <button onclick="filterTasks('overdue')" id="tab-overdue" class="task-tab btn-ims btn-ims-outline" style="font-size:.84rem;padding:7px 16px;border-color:rgba(239,68,68,.4);color:var(--red)">
+            <i class="bi bi-exclamation-triangle me-1"></i>Overdue <span class="tab-count">(@overdue)</span>
+        </button>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="ims-card">
+        <div class="ims-card-body">
+            <div class="empty-state">
+                <i class="bi bi-clipboard" style="font-size:2.5rem;color:var(--purple);opacity:.4"></i>
+                <div style="margin-top:12px;font-weight:600;color:var(--text)">No tasks assigned yet</div>
+                <div style="color:var(--text-muted);font-size:.85rem">Your supervisor hasn't assigned any tasks yet.</div>
+            </div>
+        </div>
+    </div>
+}
+
+<div id="task-list" class="d-flex flex-column gap-3">
+@foreach (var a in Model)
+{
+    var isOverdue  = a.DueDate < DateOnly.FromDateTime(DateTime.Today) && a.Report is null;
+    var filterTag  = a.Report is null || a.Report.Status == ReportStatus.Rejected ? "todo"
+                   : a.Report.Status  == ReportStatus.Submitted                  ? "review"
+                   : "done";
+    if (isOverdue) { filterTag = filterTag + " overdue"; }
+
+    <div class="ims-card task-card" data-filter="@filterTag">
+        <div class="ims-card-header">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                @if (filterTag.StartsWith("done"))
+                {
+                    <span style="width:4px;height:20px;background:var(--green);border-radius:2px;display:inline-block;flex-shrink:0"></span>
+                }
+                else if (filterTag.StartsWith("review"))
+                {
+                    <span style="width:4px;height:20px;background:var(--cyan);border-radius:2px;display:inline-block;flex-shrink:0"></span>
+                }
+                else if (isOverdue)
+                {
+                    <span style="width:4px;height:20px;background:var(--red);border-radius:2px;display:inline-block;flex-shrink:0"></span>
+                }
+                else
+                {
+                    <span style="width:4px;height:20px;background:var(--amber);border-radius:2px;display:inline-block;flex-shrink:0"></span>
+                }
+                <span style="font-weight:600">@a.Title</span>
+                <span style="font-size:.8rem;color:@(isOverdue ? "var(--red)" : "var(--text-muted)")">
+                    <i class="bi bi-calendar me-1"></i>Due: @a.DueDate.ToString("dd MMM yyyy")
+                    @if (isOverdue) { <span style="font-weight:700"> · Overdue</span> }
+                </span>
+            </div>
+            @if (a.Report is null)
+            {
+                <span class="badge bg-secondary">Pending</span>
+            }
+            else if (a.Report.Status == ReportStatus.Rejected)
+            {
+                <span class="badge bg-danger">Rejected — Resubmit</span>
+            }
+            else if (a.Report.Status == ReportStatus.Submitted)
+            {
+                <span class="badge bg-warning">Under Review</span>
+            }
+            else
+            {
+                <span class="badge bg-success">Reviewed ✓</span>
+            }
+        </div>
+        <div class="ims-card-body">
+            <p style="color:var(--text-muted);font-size:.88rem;margin-bottom:14px">@a.Description</p>
+
+            @if (a.AttachmentPath is not null)
+            {
+                <a asp-action="DownloadTaskFile" asp-route-assignmentId="@a.Id"
+                   class="btn-ims btn-ims-success btn-ims-sm" style="margin-bottom:14px;display:inline-flex">
+                    <i class="bi bi-download me-1"></i>Download: @a.AttachmentName
+                </a>
+            }
+
+            @if (a.Report is null)
+            {
+                <div>
+                    <a asp-action="SubmitReport" asp-route-assignmentId="@a.Id" class="btn-ims btn-ims-primary">
+                        <i class="bi bi-upload me-1"></i>Submit Report
+                    </a>
+                </div>
+            }
+            else if (a.Report.Status == ReportStatus.Rejected)
+            {
+                @if (!string.IsNullOrWhiteSpace(a.Report.RejectionReason))
+                {
+                    <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.85rem">
+                        <i class="bi bi-exclamation-triangle me-1" style="color:var(--red)"></i>
+                        <strong style="color:var(--red)">Rejection reason:</strong>
+                        <span style="color:var(--text-muted)"> @a.Report.RejectionReason</span>
+                    </div>
+                }
+                <a asp-action="SubmitReport" asp-route-assignmentId="@a.Id" class="btn-ims btn-ims-warning">
+                    <i class="bi bi-arrow-repeat me-1"></i>Resubmit Report
+                </a>
+            }
+            else
+            {
+                <div style="background:var(--bg3);border:1px solid var(--card-border);border-radius:10px;padding:16px;margin-bottom:12px">
+                    <div style="font-size:.8rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+                        <i class="bi bi-journal-check me-1" style="color:var(--green)"></i>Your Submitted Report
+                        @if (a.Report.Category != default)
+                        {
+                            <span class="badge bg-primary ms-2" style="text-transform:none">@a.Report.Category</span>
+                        }
+                    </div>
+                    <div class="row g-2" style="font-size:.85rem;margin-bottom:10px">
+                        <div class="col-auto" style="color:var(--text-muted)">Date: <span style="color:var(--text)">@a.Report.ReportDate</span></div>
+                        <div class="col-auto" style="color:var(--text-muted)">Hours: <span style="color:var(--text)">@a.Report.HoursWorked h</span></div>
+                    </div>
+                    <div style="font-size:.85rem;margin-bottom:8px">
+                        <span style="color:var(--text-muted);display:block;margin-bottom:3px">What was done:</span>
+                        @a.Report.TasksCompleted
+                    </div>
+                    @if (!string.IsNullOrEmpty(a.Report.KeyLearnings))
+                    {
+                        <div style="font-size:.85rem;margin-bottom:8px">
+                            <span style="color:var(--text-muted);display:block;margin-bottom:3px">Key Learnings &amp; Challenges:</span>
+                            @a.Report.KeyLearnings
+                        </div>
+                    }
+                    @if (a.Report.AttachmentPath is not null)
+                    {
+                        <div style="font-size:.82rem;color:var(--text-muted)">
+                            <i class="bi bi-paperclip me-1"></i>Uploaded: @a.Report.AttachmentName
+                        </div>
+                    }
+                </div>
+
+                @if (a.Rating.HasValue)
+                {
+                    <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:14px 16px">
+                        <div style="font-size:.8rem;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+                            <i class="bi bi-star-fill" style="color:var(--amber)"></i>
+                            <span>Supervisor's Evaluation</span>
+                            <span style="background:rgba(245,158,11,.2);color:var(--amber);padding:2px 10px;border-radius:12px;font-size:.82rem">@a.Rating / 5</span>
+                        </div>
+                        <div style="font-size:.85rem;color:var(--text-muted)">@a.Feedback</div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+</div>
+
+<div id="no-results" style="display:none">
+    <div class="ims-card">
+        <div class="ims-card-body">
+            <div class="empty-state">
+                <i class="bi bi-funnel" style="font-size:2.5rem;color:var(--purple);opacity:.4"></i>
+                <div style="margin-top:12px;font-weight:600;color:var(--text)">No tasks in this category</div>
+                <div style="color:var(--text-muted);font-size:.85rem">Try a different filter above.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterTasks(filter) {
+    // Update active tab styling
+    document.querySelectorAll('.task-tab').forEach(btn => {
+        btn.classList.remove('btn-ims-primary','btn-ims-warning','btn-ims-success','btn-ims-info');
+        btn.classList.add('btn-ims-outline');
+        btn.style.borderColor = '';
+        btn.style.color = '';
+    });
+    const activeBtn = document.getElementById('tab-' + filter);
+    if (activeBtn) {
+        activeBtn.classList.remove('btn-ims-outline');
+        if (filter === 'todo')    activeBtn.classList.add('btn-ims-warning');
+        else if (filter === 'done')   activeBtn.classList.add('btn-ims-success');
+        else if (filter === 'review') activeBtn.classList.add('btn-ims-info');
+        else if (filter === 'overdue') { activeBtn.style.borderColor = 'var(--red)'; activeBtn.style.color = 'var(--red)'; }
+        else activeBtn.classList.add('btn-ims-primary');
+    }
+
+    // Show/hide cards
+    const cards = document.querySelectorAll('.task-card');
+    let visible = 0;
+    cards.forEach(card => {
+        const tag = card.dataset.filter || '';
+        const show = filter === 'all' || tag.split(' ').includes(filter);
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+
+    document.getElementById('no-results').style.display = visible === 0 ? '' : 'none';
+}
+// Default: show all
+filterTasks('all');
+</script>

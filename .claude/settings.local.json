@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/majdi/Downloads/**)",
+      "Bash(pandoc \"Final Internship Management System capstone.docx\" -o /tmp/capstone_output.md)",
+      "Read(//tmp/**)",
+      "Bash(dotnet new *)",
+      "Bash(dotnet add *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet ef *)",
+      "Bash(dotnet tool *)",
+      "Bash(dotnet run *)",
+      "Bash(curl -s http://localhost:5000/swagger/v1/swagger.json)",
+      "Bash(wmic logicaldisk *)",
+      "Bash(taskkill /PID 38480 /F)",
+      "PowerShell(Stop-Process -Id 38480 -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Process -Name \"IMS.Web\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force)",
+      "Bash(Select-String \"ActivityReport\")",
+      "Bash(ls -t ~/.claude/projects/ | head -5)",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5072/)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "PowerShell(New-Item -ItemType Directory -Path \"C:\\\\Temp\" -Force | Out-Null; cd \"C:\\\\Users\\\\majdi\\\\OneDrive\\\\Desktop\\\\capstone 2\\\\IMS.Web\"; $job = Start-Job -ScriptBlock { cd \"C:\\\\Users\\\\majdi\\\\OneDrive\\\\Desktop\\\\capstone 2\\\\IMS.Web\"; dotnet run --no-build 2>&1 }; Start-Sleep -Seconds 10; Receive-Job $job -Keep | Select-Object -First 20)",
+      "PowerShell(Start-Sleep -Seconds 5; Receive-Job 1 -Keep | Where-Object { $_ -match \"Now listening|error|Error|warn\" } | Select-Object -First 10)",
+      "PowerShell(cd \"C:\\\\Users\\\\majdi\\\\OneDrive\\\\Desktop\\\\capstone 2\\\\IMS.Web\"; $proc = Start-Process -FilePath \"dotnet\" -ArgumentList \"run --no-build\" -WorkingDirectory \"C:\\\\Users\\\\majdi\\\\OneDrive\\\\Desktop\\\\capstone 2\\\\IMS.Web\" -PassThru -NoNewWindow; Write-Host \"PID: $\\($proc.Id\\)\"; Start-Sleep -Seconds 12; Invoke-WebRequest -Uri \"http://localhost:5000\" -UseBasicParsing -MaximumRedirection 0 -ErrorAction SilentlyContinue | Select-Object StatusCode)"
+    ]
+  }
+}

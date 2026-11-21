@@ -1,0 +1,16 @@
+# Secrets - never commit these
+**/appsettings.json
+**/appsettings.*.json
+
+# Build output
+bin/
+obj/
+.vs/
+*.user
+
+# Uploaded files
+**/wwwroot/uploads/
+
+# Logs
+*.log
+logs/

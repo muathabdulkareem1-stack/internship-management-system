@@ -1,0 +1,89 @@
+@model List<IMS.Web.Models.InternshipOpportunity>
+@{ ViewData["Title"] = "Internship Opportunities"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 style="font-size:1.15rem;font-weight:700;color:var(--text);margin:0 0 4px">Internship Opportunities</h4>
+        <p style="color:var(--text-muted);font-size:.83rem;margin:0">Post and manage opportunities for students</p>
+    </div>
+    <a asp-action="PostOpportunity" class="btn-ims btn-ims-primary">
+        <i class="bi bi-plus-lg me-1"></i>Post New
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="ims-card">
+        <div class="ims-card-body">
+            <div class="empty-state">
+                <i class="bi bi-megaphone" style="font-size:2.5rem;color:var(--purple);opacity:.4"></i>
+                <div style="margin-top:12px;font-weight:600;color:var(--text)">No opportunities posted yet</div>
+                <div style="color:var(--text-muted);font-size:.85rem;margin-bottom:16px">Create an opportunity for students to apply to.</div>
+                <a asp-action="PostOpportunity" class="btn-ims btn-ims-primary"><i class="bi bi-plus me-1"></i>Post First Opportunity</a>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="d-flex flex-column gap-3">
+@foreach (var o in Model)
+{
+    var taken = o.Applications.Count(a => a.Status != IMS.Web.Enums.InternshipStatus.Rejected
+                                        && a.Status != IMS.Web.Enums.InternshipStatus.Cancelled);
+    var spotsLeft = o.MaxStudents - taken;
+    var badgeClass = o.IsOpen ? "bg-success" : "bg-secondary";
+    var btnClass   = o.IsOpen ? "btn-ims-warning" : "btn-ims-success";
+    var spotsClass = spotsLeft <= 0 ? "text-danger fw-semibold" : "";
+    <div class="opp-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:12px">
+            <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+                    <span style="font-size:.98rem;font-weight:700">@o.Title</span>
+                    <span style="color:var(--text-muted);font-size:.85rem">— @o.CompanyName</span>
+                    <span class="badge @badgeClass">@(o.IsOpen ? "Open" : "Closed")</span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--text-muted)">
+                    <span><i class="bi bi-geo-alt me-1"></i>@o.Location</span>
+                    <span><i class="bi bi-calendar me-1"></i>@o.StartDate.ToString("dd MMM yyyy") → @o.EndDate.ToString("dd MMM yyyy")</span>
+                    <span><i class="bi bi-calendar-x me-1"></i>Deadline: @o.ApplicationDeadline.ToString("dd MMM yyyy")</span>
+                    <span class="@spotsClass">
+                        <i class="bi bi-people me-1"></i>@taken / @o.MaxStudents
+                        @if (spotsLeft <= 0)
+                        {
+                            <span>(Full)</span>
+                        }
+                        else
+                        {
+                            <span>(@spotsLeft left)</span>
+                        }
+                    </span>
+                </div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <a asp-action="EditOpportunity" asp-route-id="@o.Id"
+                   class="btn-ims btn-ims-outline" style="padding:6px 10px" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <form asp-action="ToggleOpportunity" method="post">
+                    <input type="hidden" name="id" value="@o.Id" />
+                    <button class="btn-ims @btnClass" style="padding:6px 12px;font-size:.82rem">
+                        @(o.IsOpen ? "Close" : "Reopen")
+                    </button>
+                </form>
+                <form asp-action="DeleteOpportunity" method="post"
+                      onsubmit="return confirm('Delete this opportunity?')">
+                    <input type="hidden" name="id" value="@o.Id" />
+                    <button class="btn-ims btn-ims-danger" style="padding:6px 10px" title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(o.Description))
+        {
+            <p style="font-size:.83rem;color:var(--text-muted);margin:0">@o.Description</p>
+        }
+    </div>
+}
+</div>

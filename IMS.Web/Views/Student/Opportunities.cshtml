@@ -1,0 +1,114 @@
+@model List<IMS.Web.Models.InternshipOpportunity>
+@{
+    ViewData["Title"] = "Browse Opportunities";
+    var appliedIds           = ViewBag.AppliedIds as List<int> ?? [];
+    bool hasActiveInternship = ViewBag.HasActiveInternship == true;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 style="font-size:1.15rem;font-weight:700;color:var(--text);margin:0 0 4px">Available Internships</h4>
+        <p style="color:var(--text-muted);font-size:.83rem;margin:0">Browse and apply to open opportunities</p>
+    </div>
+    @if (!hasActiveInternship)
+    {
+        <a asp-action="ApplyInternship" class="btn-ims btn-ims-outline">
+            <i class="bi bi-pencil me-1"></i>Apply Own
+        </a>
+    }
+</div>
+
+@if (hasActiveInternship)
+{
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:24px;padding:16px 20px;border-radius:12px;background:linear-gradient(135deg,rgba(6,182,212,.07),rgba(79,70,229,.05));border:1px solid rgba(6,182,212,.2);box-shadow:0 0 24px rgba(6,182,212,.06),inset 0 1px 0 rgba(6,182,212,.08)">
+        <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:38px;height:38px;border-radius:10px;background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 14px rgba(6,182,212,.12)">
+                <i class="bi bi-shield-check" style="color:var(--cyan-light);font-size:1rem"></i>
+            </div>
+            <div>
+                <div style="font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:2px;font-family:var(--font-display)">Active Internship Enrolled</div>
+                <div style="font-size:.81rem;color:var(--text-muted)">You can browse opportunities, but applications are disabled while enrolled.</div>
+            </div>
+        </div>
+        <a asp-action="ApplyInternship"
+           style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:8px;font-size:.81rem;font-weight:600;text-decoration:none;font-family:var(--font-body);background:rgba(6,182,212,.12);color:var(--cyan-light);border:1px solid rgba(6,182,212,.3);white-space:nowrap;transition:all .2s ease"
+           onmouseover="this.style.background='rgba(6,182,212,.22)';this.style.borderColor='rgba(6,182,212,.5)'"
+           onmouseout="this.style.background='rgba(6,182,212,.12)';this.style.borderColor='rgba(6,182,212,.3)'">
+            View my internship <i class="bi bi-arrow-right" style="font-size:.78rem"></i>
+        </a>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="ims-card">
+        <div class="ims-card-body">
+            <div class="empty-state">
+                <i class="bi bi-megaphone" style="font-size:2.5rem;color:var(--purple);opacity:.4"></i>
+                <div style="margin-top:12px;font-weight:600;color:var(--text)">No opportunities posted yet</div>
+                <div style="color:var(--text-muted);font-size:.85rem">Check back later for new internship postings.</div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="d-flex flex-column gap-3">
+@foreach (var o in Model)
+{
+    var taken     = o.Applications.Count(a => a.Status != IMS.Web.Enums.InternshipStatus.Rejected
+                                           && a.Status != IMS.Web.Enums.InternshipStatus.Cancelled);
+    var spotsLeft = o.MaxStudents - taken;
+    var spotsBadge = spotsLeft <= 0 ? "bg-danger" : spotsLeft <= 2 ? "bg-warning text-dark" : "bg-success";
+    <div class="opp-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:12px">
+            <div>
+                <h5 style="font-size:1rem;font-weight:700;margin:0 0 6px;color:var(--text)">@o.Title</h5>
+                <div style="font-size:.83rem;color:var(--text-muted);margin-bottom:4px">
+                    <i class="bi bi-building me-1"></i>@o.CompanyName
+                    <span class="mx-2" style="opacity:.4">·</span>
+                    <i class="bi bi-geo-alt me-1"></i>@o.Location
+                </div>
+                <div style="font-size:.8rem;color:var(--text-muted)">
+                    <i class="bi bi-calendar-range me-1"></i>@o.StartDate.ToString("dd MMM yyyy") → @o.EndDate.ToString("dd MMM yyyy")
+                </div>
+            </div>
+            <div style="text-align:right">
+                <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:6px">
+                    <i class="bi bi-calendar-x me-1"></i>Deadline: @o.ApplicationDeadline.ToString("dd MMM yyyy")
+                </div>
+                <span class="badge @spotsBadge">
+                    @(spotsLeft <= 0 ? "Full" : $"{spotsLeft} spot(s) left")
+                </span>
+            </div>
+        </div>
+
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px;line-height:1.6">@o.Description</p>
+
+        @if (hasActiveInternship)
+        {
+        }
+        else if (appliedIds.Contains(o.Id))
+        {
+            <span class="badge" style="background:rgba(6,182,212,.15);color:var(--cyan);border:1px solid rgba(6,182,212,.3);padding:6px 14px;font-size:.82rem">
+                <i class="bi bi-check2-circle me-1"></i>Already Applied
+            </span>
+        }
+        else if (spotsLeft > 0)
+        {
+            <form asp-action="ApplyToOpportunity" method="post">
+                <input type="hidden" name="opportunityId" value="@o.Id" />
+                <button type="submit" class="btn-ims btn-ims-primary"
+                        onclick="return confirm('Apply to @o.Title at @o.CompanyName?')">
+                    <i class="bi bi-send me-1"></i>Apply Now
+                </button>
+            </form>
+        }
+        else
+        {
+            <button class="btn-ims btn-ims-outline" disabled>
+                <i class="bi bi-x-circle me-1"></i>No Spots Available
+            </button>
+        }
+    </div>
+}
+</div>
