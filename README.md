@@ -66,6 +66,22 @@ All insights are visualized using **Chart.js** (bar charts, doughnut charts, pro
 
 ---
 
+## Screenshots
+
+### Admin — Manage Users
+![Admin Dashboard](screenshots/admin-manage-users.png)
+
+### Coordinator Dashboard
+![Coordinator Dashboard](screenshots/coordinator-dashboard.png)
+
+### Supervisor Dashboard
+![Supervisor Dashboard](screenshots/supervisor-dashboard.png)
+
+### Student Dashboard
+![Student Dashboard](screenshots/student-dashboard.png)
+
+---
+
 ## System Diagrams
 
 ### Class Diagram
